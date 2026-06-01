@@ -1,0 +1,56 @@
+# ============================================================================
+#  docker-compose.yml  —  local infrastructure for development.
+#
+#  Brings up two containers with one command (`docker compose up -d`):
+#    • postgres : the database our app connects to in the 'dev' profile
+#    • pgadmin  : a web UI for inspecting that database in the browser
+#
+#  Values come from a local .env file (copy .env.example -> .env). Compose reads
+#  .env automatically. The ${VAR:-default} syntax supplies a fallback if unset.
+# ============================================================================
+
+services:
+
+  postgres:
+    image: postgres:16-alpine          # Alpine = small image; Postgres 16 is current & stable.
+    container_name: taskflow-postgres
+    restart: unless-stopped
+    environment:
+      # These three bootstrap the database on first start. They MUST match the
+      # datasource credentials in application-dev.yml.
+      POSTGRES_USER: ${DB_USERNAME:-taskflow}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-taskflow}
+      POSTGRES_DB: ${DB_NAME:-taskflow}
+    ports:
+      # host:container. Host port is 5433 (not 5432) because this machine runs a
+      # native PostgreSQL service that already owns 5432. The container still
+      # listens on 5432 internally; only the host-side port differs. Override via DB_PORT.
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - taskflow_pgdata:/var/lib/postgresql/data   # named volume = data survives container restarts
+    healthcheck:
+      # Lets other tools (and you) know when Postgres is actually ready to accept connections.
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-taskflow} -d ${DB_NAME:-taskflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: taskflow-pgadmin
+    restart: unless-stopped
+    environment:
+      # NOTE: pgAdmin validates this and REJECTS reserved TLDs like ".local",
+      # so we use a normal-looking domain. It's only a local login, not real email.
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@taskflow.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"   # single-user mode; no login screen fuss for local dev
+    ports:
+      - "5050:80"                      # browse to http://localhost:5050
+    depends_on:
+      postgres:
+        condition: service_healthy     # wait until Postgres passes its healthcheck
+
+# Named volume declaration. Docker manages the storage; `docker compose down -v` wipes it.
+volumes:
+  taskflow_pgdata:
