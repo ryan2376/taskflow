@@ -1,0 +1,25 @@
+# ============================================================================
+#  .gitattributes — tells Git how to treat files, regardless of each
+#  developer's OS. Its main job here: keep line endings consistent so the repo
+#  behaves identically on Windows, macOS, and Linux (and CI servers).
+# ============================================================================
+
+# Default: let Git auto-detect text files and store them with LF in the repo,
+# checking them out with the platform's native ending on disk.
+* text=auto
+
+# Shell scripts MUST use LF, even on Windows — otherwise they break when run on
+# a Linux/macOS box (e.g. the Maven wrapper on a deployment server or CI).
+*.sh   text eol=lf
+mvnw   text eol=lf
+
+# Windows batch/cmd files should stay CRLF.
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+
+# Binary files: never apply line-ending conversion or try to diff them.
+*.docx binary
+*.jar  binary
+*.png  binary
+*.jpg  binary
+*.ico  binary
