@@ -1,0 +1,58 @@
+# ============================================================================
+#  application.yml  —  COMMON configuration, shared by every profile.
+#
+#  Spring Boot loads this file first, then layers a profile-specific file on top
+#  (application-dev.yml or application-prod.yml). Profile values override these.
+#
+#  Which profile is active? Controlled by `spring.profiles.active`. We default it
+#  to "dev" below so local runs Just Work; in production we set the environment
+#  variable SPRING_PROFILES_ACTIVE=prod to flip it.
+# ============================================================================
+
+spring:
+  application:
+    name: taskflow-api
+
+  profiles:
+    # Default profile when nothing else is specified. An env var or -Dspring.profiles.active
+    # overrides this at launch time.
+    default: dev
+
+  jpa:
+    hibernate:
+      # CRITICAL for safety and for this project's design: 'validate' means Hibernate
+      # checks that the DB schema matches our entities at startup but NEVER changes it.
+      # The schema is owned exclusively by Flyway migrations — never by Hibernate.
+      # (The brief forbids ddl-auto=update for exactly this reason.)
+      ddl-auto: validate
+    open-in-view: false   # Disable the OSIV anti-pattern; we load data explicitly in services.
+
+  flyway:
+    enabled: true
+    # Where our versioned migration scripts live (V1__*.sql, V2__*.sql, ...).
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+# Springdoc / Swagger UI locations. Visiting /swagger-ui.html will redirect here.
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+# Actuator: expose only health and info over HTTP. Keep the surface minimal.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# Custom application properties (our own namespace, not Spring's).
+# Consumed by JwtService in Phase 4. Values are supplied per-profile below.
+app:
+  jwt:
+    # HMAC signing secret for JWTs. Provided by each profile (dev has a default,
+    # prod REQUIRES an environment variable — see the profile files).
+    secret: ${JWT_SECRET}
+    # Token lifetime in milliseconds (default 24h). Overridable via env.
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}

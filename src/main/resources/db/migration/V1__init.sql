@@ -1,0 +1,15 @@
+-- ============================================================================
+--  V1__init.sql  —  Flyway migration #1  (PLACEHOLDER, filled in Phase 2)
+--
+--  Flyway naming convention: V<version>__<description>.sql
+--    • the "V" marks a versioned migration
+--    • the number is the order it runs in
+--    • the double underscore "__" separates version from description
+--
+--  Flyway runs each new migration exactly once, in order, and records it in a
+--  table called flyway_schema_history. Once applied, a migration must never be
+--  edited — you add a NEW V2__, V3__, ... instead.
+--
+--  Phase 2 will replace this comment with the real schema:
+--  users, categories, tasks (+ enums, foreign keys, and indexes).
+-- ============================================================================

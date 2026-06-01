@@ -1,0 +1,29 @@
+# ============================================================================
+#  application-prod.yml  —  PRODUCTION profile.
+#
+#  Golden rule: NOTHING sensitive is hard-coded. Every value comes from an
+#  environment variable, and most have NO default — if the env var is missing
+#  the app fails fast at startup rather than running with an insecure fallback.
+#
+#  Activate with: SPRING_PROFILES_ACTIVE=prod
+# ============================================================================
+
+spring:
+  datasource:
+    # No defaults: these MUST be provided by the environment in production.
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    show-sql: false   # Never log SQL in production (noise + potential data leakage).
+
+logging:
+  level:
+    root: INFO
+
+app:
+  jwt:
+    # REQUIRED in production. No default on purpose: a missing JWT_SECRET should
+    # crash startup, not silently sign tokens with a guessable key.
+    secret: ${JWT_SECRET}
