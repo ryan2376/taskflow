@@ -1,0 +1,25 @@
+# ---- Maven build output ----
+target/
+
+# ---- Secrets / local environment ----
+# NEVER commit the real .env. The committed template is .env.example.
+.env
+
+# ---- IDE / editor files ----
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+*.swp
+
+# ---- OS noise ----
+.DS_Store
+Thumbs.db
+
+# ---- Logs ----
+*.log
+
+# ---- Maven wrapper note ----
+# We DO commit mvnw, mvnw.cmd, and .mvn/ so the wrapper works for everyone.

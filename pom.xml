@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!--
+      ┌─────────────────────────────────────────────────────────────────────────┐
+      │ pom.xml  =  "Project Object Model".  This is THE definition of our build. │
+      │ Maven reads this file to know: what Java version, which libraries to      │
+      │ download, and how to compile/test/package the app into a runnable jar.    │
+      └─────────────────────────────────────────────────────────────────────────┘
+    -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      The "parent" POM. Spring Boot ships a curated parent that does two huge things:
+        1. Dependency management: it pins compatible versions for ~200 libraries, so
+           when we declare a dependency below WITHOUT a <version>, the version comes
+           from here. This is why we don't hand-pick Hibernate/Jackson/Flyway versions.
+        2. Sensible build defaults: compiler settings, resource filtering, the
+           Spring Boot plugin wiring, etc.
+      We pinned 3.5.3 — the latest stable Spring Boot 3.x line, verified on Maven Central.
+    -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.3</version>
+        <relativePath/> <!-- empty = look the parent up from the Maven repository, not a local folder -->
+    </parent>
+
+    <!-- Coordinates that uniquely identify OUR artifact in any Maven repository. -->
+    <groupId>com.taskflow</groupId>
+    <artifactId>taskflow-api</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>taskflow-api</name>
+    <description>TaskFlow — a personal productivity REST API (learning project)</description>
+
+    <properties>
+        <!-- Tell Maven (and Spring Boot's compiler config) to target Java 21 LTS. -->
+        <java.version>21</java.version>
+        <!-- Versions for libraries NOT managed by the Spring Boot parent BOM.
+             We keep them here as properties so there's a single place to bump them. -->
+        <jjwt.version>0.12.6</jjwt.version>
+        <springdoc.version>2.8.6</springdoc.version>
+    </properties>
+
+    <dependencies>
+
+        <!-- ════════════════ Web layer ════════════════ -->
+        <!-- Spring MVC + an embedded Tomcat server + Jackson (JSON). This is what lets
+             us write @RestController endpoints and serve JSON over HTTP. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- ════════════════ Persistence layer ════════════════ -->
+        <!-- Spring Data JPA = Hibernate (the ORM) + Spring's repository abstraction.
+             Lets us map Java objects to DB tables and get CRUD repositories for free. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- ════════════════ Security ════════════════ -->
+        <!-- Spring Security. Brings the filter chain, authentication, BCrypt, etc.
+             By merely being on the classpath it locks everything down by default —
+             we'll configure stateless JWT auth on top of it in Phase 4. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- ════════════════ Validation ════════════════ -->
+        <!-- Hibernate Validator (the reference impl of Jakarta Bean Validation).
+             Powers @NotNull / @Email / @Size annotations on our request DTOs. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- ════════════════ Operational endpoints ════════════════ -->
+        <!-- Actuator exposes /actuator/health, /actuator/info, metrics, etc.
+             Production-grade "is the app alive?" plumbing with almost no effort. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- ════════════════ Database driver + migrations ════════════════ -->
+        <!-- PostgreSQL JDBC driver. 'runtime' scope: needed to RUN, not to compile,
+             since our code talks to JPA interfaces, never to Postgres classes directly. -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Flyway = versioned, repeatable SQL migrations. Our schema lives in
+             src/main/resources/db/migration as V1__*.sql, V2__*.sql ...
+             flyway-core is the engine; flyway-database-postgresql is the Postgres
+             support module (split out into its own artifact since Flyway 10). -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- ════════════════ Boilerplate reduction ════════════════ -->
+        <!-- Lombok generates getters/setters/builders/constructors at COMPILE time
+             from annotations, so our entities and DTOs stay readable. It's optional
+             at runtime (the generated code is plain Java), hence optional=true. -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ════════════════ JWT (JSON Web Tokens) ════════════════ -->
+        <!-- JJWT, split across three artifacts by design:
+               - jjwt-api:     the interfaces we code against (compile scope)
+               - jjwt-impl:    the runtime implementation
+               - jjwt-jackson: JSON (de)serialization of token claims via Jackson
+             impl + jackson are 'runtime' because we only reference the api at compile time. -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ════════════════ API documentation ════════════════ -->
+        <!-- Springdoc scans our controllers and serves interactive Swagger UI at
+             /swagger-ui.html plus an OpenAPI 3 spec at /v3/api-docs. -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+
+        <!-- ════════════════ Testing ════════════════ -->
+        <!-- The test starter bundles JUnit 5, Mockito, AssertJ, Spring Test, etc. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Helpers for testing secured endpoints (e.g. @WithMockUser). -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Testcontainers: spins up a REAL Postgres in Docker for integration tests,
+             so we test against the actual database engine, not an in-memory fake.
+             Versions are managed by the Spring Boot parent BOM. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+              The Spring Boot Maven plugin. Its headline job is repackaging our compiled
+              classes + all dependencies into a single executable "fat jar" you can run
+              with `java -jar`. It also powers `./mvnw spring-boot:run`.
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- Lombok is only needed at compile time; exclude it from the fat jar. -->
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
