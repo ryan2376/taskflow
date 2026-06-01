@@ -22,6 +22,13 @@ spring:
       hibernate:
         format_sql: true   # Pretty-print that SQL across multiple lines.
 
+  flyway:
+    # Add the dev-only seed location ON TOP of the base classpath:db/migration.
+    # Flyway merges all locations into one version-ordered set, so it runs
+    # V1 (schema) then V2 (seed). Production inherits ONLY db/migration from
+    # application.yml, so the seed never runs there.
+    locations: classpath:db/migration,classpath:db/seed
+
 logging:
   level:
     # See the SQL Hibernate generates...
