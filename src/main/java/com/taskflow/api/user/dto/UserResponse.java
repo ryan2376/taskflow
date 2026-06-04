@@ -1,6 +1,6 @@
 package com.taskflow.api.user.dto;
 
-import com.taskflow.api.user.User;
+import com.taskflow.api.user.entity.User;
 
 import java.time.Instant;
 import java.util.UUID;

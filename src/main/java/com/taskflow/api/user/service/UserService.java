@@ -1,5 +1,7 @@
-package com.taskflow.api.user;
+package com.taskflow.api.user.service;
 
+import com.taskflow.api.user.entity.User;
+import com.taskflow.api.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

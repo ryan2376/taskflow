@@ -1,7 +1,8 @@
-package com.taskflow.api.category;
+package com.taskflow.api.category.controller;
 
 import com.taskflow.api.category.dto.CategoryRequest;
 import com.taskflow.api.category.dto.CategoryResponse;
+import com.taskflow.api.category.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

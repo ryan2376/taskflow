@@ -1,6 +1,7 @@
-package com.taskflow.api.category;
+package com.taskflow.api.category.mapper;
 
 import com.taskflow.api.category.dto.CategoryResponse;
+import com.taskflow.api.category.entity.Category;
 import org.springframework.stereotype.Component;
 
 /**

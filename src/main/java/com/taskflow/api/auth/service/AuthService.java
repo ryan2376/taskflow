@@ -1,11 +1,11 @@
-package com.taskflow.api.auth;
+package com.taskflow.api.auth.service;
 
 import com.taskflow.api.auth.dto.AuthResponse;
 import com.taskflow.api.auth.dto.LoginRequest;
 import com.taskflow.api.auth.dto.RegisterRequest;
-import com.taskflow.api.user.User;
-import com.taskflow.api.user.UserRepository;
 import com.taskflow.api.user.dto.UserResponse;
+import com.taskflow.api.user.entity.User;
+import com.taskflow.api.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
 package com.taskflow.api.config;
 
-import com.taskflow.api.auth.JwtAuthFilter;
+import com.taskflow.api.auth.filter.JwtAuthFilter;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;

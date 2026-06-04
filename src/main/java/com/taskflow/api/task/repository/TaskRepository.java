@@ -1,10 +1,12 @@
-package com.taskflow.api.task;
+package com.taskflow.api.task.repository;
 
+import com.taskflow.api.task.entity.Task;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,6 +27,13 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificat
      * same pattern as categories).
      */
     Optional<Task> findByIdAndOwnerId(UUID id, UUID ownerId);
+
+    /**
+     * All of one user's tasks as a plain list. Used by Phase 7's simple GET /tasks.
+     * (Phase 8 will switch the endpoint to the Specification + Pageable variants below
+     * for filtering and pagination.)
+     */
+    List<Task> findByOwnerId(UUID ownerId);
 
     /**
      * A page of one user's tasks. {@link Pageable} carries the page number, size, and
