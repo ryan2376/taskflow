@@ -1,4 +1,4 @@
-package com.taskflow.api.user;
+package com.taskflow.api.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

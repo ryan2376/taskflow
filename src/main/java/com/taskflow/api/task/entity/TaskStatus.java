@@ -1,4 +1,4 @@
-package com.taskflow.api.task;
+package com.taskflow.api.task.entity;
 
 /**
  * The lifecycle state of a {@link Task}.

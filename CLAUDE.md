@@ -70,21 +70,57 @@ A personal productivity API. An authenticated user can create tasks, organize th
 
 UUIDs for primary keys, not auto-increment longs. Explain why the first time you create an entity.
 
-### Package layout (package-by-feature)
+### Package layout (package-by-feature, then by-layer)
+
+Each **feature** package (`auth`, `user`, `category`, `task`, `analytics`) is split into
+**layer** sub-packages — `controller / service / repository / entity / mapper / dto`
+(plus `filter`, `spec` where a feature needs them). This keeps every feature self-contained
+while making each architectural layer obvious at a glance. `config` and `common` are
+cross-cutting (not feature slices) and are therefore NOT sub-foldered by layer.
+
+> Reminder when adding files in later phases: a new entity goes in `<feature>/entity/`,
+> a repository in `<feature>/repository/`, and so on. Because folders are Java packages,
+> classes in the same feature now reference each other across packages and need explicit
+> imports (e.g. a service imports its own entity from `<feature>.entity`).
 
 ```
 com.taskflow.api
 ├── TaskflowApplication.java
-├── config/          SecurityConfig, OpenApiConfig, CorsConfig, PasswordEncoderConfig
-├── auth/            AuthController, AuthService, JwtService, JwtAuthFilter, dtos
-├── user/            User entity, repo, service
-├── category/        entity, repo, service, controller, dtos, mapper
-├── task/            entity, repo, service, controller, dtos, mapper, specifications
-├── analytics/       AnalyticsController, AnalyticsService, response DTOs
+├── config/                SecurityConfig, OpenApiConfig, CorsConfig, PasswordEncoderConfig   (cross-cutting; not sub-foldered)
+├── auth/
+│   ├── controller/        AuthController
+│   ├── service/           AuthService, JwtService
+│   ├── filter/            JwtAuthFilter
+│   └── dto/               RegisterRequest, LoginRequest, AuthResponse
+├── user/
+│   ├── controller/        UserController
+│   ├── service/           UserService
+│   ├── repository/        UserRepository
+│   ├── entity/            User
+│   └── dto/               UserResponse
+├── category/
+│   ├── controller/        CategoryController
+│   ├── service/           CategoryService
+│   ├── repository/        CategoryRepository
+│   ├── entity/            Category
+│   ├── mapper/            CategoryMapper
+│   └── dto/               CategoryRequest, CategoryResponse
+├── task/
+│   ├── controller/        TaskController
+│   ├── service/           TaskService
+│   ├── repository/        TaskRepository
+│   ├── entity/            Task, Priority, TaskStatus        (enums live beside the entity)
+│   ├── mapper/            TaskMapper
+│   ├── spec/              task Specifications (added in Phase 8)
+│   └── dto/               TaskRequest, TaskResponse
+├── analytics/
+│   ├── controller/        AnalyticsController
+│   ├── service/           AnalyticsService
+│   └── dto/               response DTOs
 └── common/
-    ├── exception/   GlobalExceptionHandler + custom exceptions
-    ├── dto/         PageResponse<T>, ErrorResponse
-    └── audit/       JPA auditing config for createdAt/updatedAt
+    ├── exception/         GlobalExceptionHandler + custom exceptions
+    ├── dto/               PageResponse<T>, ErrorResponse
+    └── audit/             JPA auditing config for createdAt/updatedAt
 ```
 
 ### API surface (all JSON, all under `/api/v1`)

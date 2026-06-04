@@ -1,5 +1,6 @@
-package com.taskflow.api.auth;
+package com.taskflow.api.auth.filter;
 
+import com.taskflow.api.auth.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,4 +1,4 @@
-package com.taskflow.api.task;
+package com.taskflow.api.task.entity;
 
 /**
  * The importance level of a {@link Task}.

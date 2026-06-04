@@ -1,4 +1,4 @@
-package com.taskflow.api.auth;
+package com.taskflow.api.auth.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

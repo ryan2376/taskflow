@@ -1,6 +1,7 @@
-package com.taskflow.api.user;
+package com.taskflow.api.user.controller;
 
 import com.taskflow.api.user.dto.UserResponse;
+import com.taskflow.api.user.service.UserService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

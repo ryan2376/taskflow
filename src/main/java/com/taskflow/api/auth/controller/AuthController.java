@@ -1,8 +1,9 @@
-package com.taskflow.api.auth;
+package com.taskflow.api.auth.controller;
 
 import com.taskflow.api.auth.dto.AuthResponse;
 import com.taskflow.api.auth.dto.LoginRequest;
 import com.taskflow.api.auth.dto.RegisterRequest;
+import com.taskflow.api.auth.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

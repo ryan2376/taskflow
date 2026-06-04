@@ -1,6 +1,6 @@
-package com.taskflow.api.category;
+package com.taskflow.api.category.entity;
 
-import com.taskflow.api.user.User;
+import com.taskflow.api.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

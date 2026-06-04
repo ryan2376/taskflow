@@ -1,5 +1,6 @@
-package com.taskflow.api.category;
+package com.taskflow.api.category.repository;
 
+import com.taskflow.api.category.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

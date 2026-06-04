@@ -1,8 +1,11 @@
-package com.taskflow.api.category;
+package com.taskflow.api.category.service;
 
 import com.taskflow.api.category.dto.CategoryRequest;
 import com.taskflow.api.category.dto.CategoryResponse;
-import com.taskflow.api.user.UserRepository;
+import com.taskflow.api.category.entity.Category;
+import com.taskflow.api.category.mapper.CategoryMapper;
+import com.taskflow.api.category.repository.CategoryRepository;
+import com.taskflow.api.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
