@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TaskFlow API — How to Run &amp; Test It</title>
+<style>
+  :root{
+    --ink:#1f2933;--muted:#52606d;--line:#cbd2d9;--soft:#f5f7fa;
+    --blue:#2563eb;--blue-bg:#eff6ff;--green:#047857;--green-bg:#ecfdf5;
+    --purple:#7c3aed;--purple-bg:#f5f3ff;--amber:#b45309;--amber-bg:#fffbeb;
+    --red:#b91c1c;--red-bg:#fef2f2;--code-bg:#f6f8fa;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;color:var(--ink);line-height:1.55;font-size:11pt;margin:0;}
+  @page{size:A4;margin:18mm 16mm;}
+  h1,h2,h3,h4{line-height:1.25;color:#102a43;}
+  h1{font-size:25pt;margin:0 0 6px;}
+  h2{font-size:17pt;margin:30px 0 10px;padding-bottom:6px;border-bottom:3px solid var(--blue);}
+  h3{font-size:13pt;margin:20px 0 6px;color:var(--blue);}
+  h4{font-size:11.5pt;margin:14px 0 4px;color:#334e68;}
+  p{margin:8px 0;} ul,ol{margin:8px 0 8px 22px;} li{margin:4px 0;}
+  code{font-family:"Cascadia Code",Consolas,"Courier New",monospace;font-size:9.5pt;background:var(--soft);padding:1px 5px;border-radius:4px;color:#0b3d2e;}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:6px;padding:11px 13px;overflow-x:auto;margin:10px 0;break-inside:avoid;}
+  pre code{background:none;padding:0;font-size:9pt;color:var(--ink);line-height:1.5;}
+  .lead{font-size:12pt;color:var(--muted);}
+  .box{border-radius:8px;padding:11px 14px;margin:12px 0;break-inside:avoid;border:1px solid;}
+  .box p:first-child{margin-top:0;} .box p:last-child{margin-bottom:0;}
+  .concept{background:var(--blue-bg);border-color:#bfdbfe;}
+  .why{background:var(--green-bg);border-color:#a7f3d0;}
+  .tip{background:var(--purple-bg);border-color:#ddd6fe;}
+  .gotcha{background:var(--amber-bg);border-color:#fde68a;}
+  .err{background:var(--red-bg);border-color:#fecaca;}
+  .box .label{font-weight:700;font-size:9.5pt;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px;}
+  .concept .label{color:var(--blue);} .why .label{color:var(--green);}
+  .tip .label{color:var(--purple);} .gotcha .label{color:var(--amber);} .err .label{color:var(--red);}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:9.5pt;break-inside:avoid;}
+  th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top;}
+  th{background:var(--soft);color:#102a43;}
+  .part{page-break-before:always;}
+  .cover{text-align:center;padding:54px 0 22px;}
+  .cover .sub{color:var(--muted);font-size:13pt;margin-top:4px;}
+  .cover .meta{margin-top:22px;font-size:10pt;color:var(--muted);}
+  .toc a{color:var(--ink);text-decoration:none;} .toc li{margin:4px 0;}
+  .small{font-size:9pt;color:var(--muted);}
+  .method{display:inline-block;font-family:"Cascadia Code",Consolas,monospace;font-weight:700;font-size:8.5pt;color:#fff;border-radius:4px;padding:2px 7px;margin-right:6px;min-width:54px;text-align:center;}
+  .get{background:#0e7490;} .post{background:#047857;} .put{background:#b45309;} .patch{background:#7c3aed;} .delete{background:#b91c1c;}
+  .lock{color:var(--amber);font-weight:700;} .open{color:var(--green);font-weight:700;}
+  .ep{border:1px solid var(--line);border-radius:8px;margin:14px 0;break-inside:avoid;overflow:hidden;}
+  .ep .top{background:#102a43;color:#fff;padding:7px 12px;font-family:"Cascadia Code",Consolas,monospace;font-size:9.5pt;}
+  .ep .top .auth{float:right;font-family:"Segoe UI",sans-serif;font-size:8pt;font-weight:600;}
+  .ep .in{padding:6px 13px 11px;}
+  .step{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:10px 0;break-inside:avoid;}
+  .step b.n{display:inline-block;background:var(--blue);color:#fff;border-radius:50%;width:20px;height:20px;text-align:center;font-size:9pt;line-height:20px;margin-right:7px;}
+  hr{border:none;border-top:1px solid var(--line);margin:18px 0;}
+  .url{font-family:"Cascadia Code",Consolas,monospace;background:#102a43;color:#9be6c0;padding:3px 8px;border-radius:5px;font-size:9.5pt;}
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>TaskFlow API</h1>
+  <div class="sub">How to run it &amp; test every endpoint — a hands-on guide</div>
+  <div class="meta">
+    For someone who just opened Postman and didn’t know what to paste.<br>
+    No prior API-testing experience assumed. Three ways shown: Swagger (easiest), Postman, curl.<br>
+    Spring Boot 3 · runs at <span class="url">http://localhost:8080</span> · Generated 4 June 2026
+  </div>
+</div>
+
+<div class="box concept">
+  <span class="label">The 30-second mental model</span>
+  <p>Your API is a program waiting at the address <b><span class="url">http://localhost:8080</span></b>
+  (“localhost” = <i>this computer</i>; “8080” = the door number it listens on). You test it by sending it
+  <b>HTTP requests</b> and reading the <b>responses</b>. Almost every endpoint is <b>locked</b> 🔒 — you must
+  first <b>register/login to get a token</b>, then attach that token to every other request. That token step is
+  the bit Postman didn’t make obvious. This guide fixes that.</p>
+</div>
+
+<h2>Contents</h2>
+<div class="toc">
+<ol>
+  <li><a href="#start">Step 0 — Get the app running (must do first)</a></li>
+  <li><a href="#urls">Step 1 — The URLs you’ll paste</a></li>
+  <li><a href="#token">Step 2 — The golden rule: get a token, then attach it</a></li>
+  <li><a href="#swagger">Method A — Swagger UI (easiest, no Postman needed)</a></li>
+  <li><a href="#postman">Method B — Postman, click by click</a></li>
+  <li><a href="#curl">Method C — curl (command line)</a></li>
+  <li><a href="#reference">Full endpoint reference (every URL + example body)</a></li>
+  <li><a href="#errors">Understanding responses &amp; fixing errors</a></li>
+  <li><a href="#trouble">Troubleshooting checklist</a></li>
+</ol>
+</div>
+
+<!-- ===================== STEP 0 ===================== -->
+<div class="part" id="start"></div>
+<h2>Step 0 — Get the app running (must do first)</h2>
+<p class="lead">Nothing can be tested until two things are running: the <b>database</b> and the <b>app</b>.</p>
+
+<div class="step"><b class="n">1</b><b>Start Docker Desktop</b> (the whale icon). Wait until it says “running.”</div>
+<div class="step"><b class="n">2</b><b>Start the database</b> — in a terminal inside the project folder:
+<pre><code>docker compose up -d postgres</code></pre>
+This starts PostgreSQL in the background on port <b>5433</b>. Check it’s healthy with <code>docker ps</code>.</div>
+<div class="step"><b class="n">3</b><b>Start the app:</b>
+<pre><code>./mvnw spring-boot:run            # macOS/Linux/Git-Bash
+mvnw spring-boot:run              # Windows cmd</code></pre>
+Wait for a line like <code>Started TaskflowApplication in 4.2 seconds</code>. The app is now listening.</div>
+<div class="step"><b class="n">4</b><b>Confirm it’s alive</b> — open this in your browser:
+<p><span class="url">http://localhost:8080/actuator/health</span></p>
+You should see <code>{"status":"UP"}</code>. If you do, you’re ready to test. 🎉</div>
+
+<div class="box gotcha">
+  <span class="label">Watch out</span>
+  <p>Leave the app running in its terminal window while you test. Closing that window (or pressing
+  <code>Ctrl+C</code>) stops the app, and every request will then fail with “connection refused.”</p>
+</div>
+
+<!-- ===================== STEP 1 ===================== -->
+<div class="part" id="urls"></div>
+<h2>Step 1 — The URLs you’ll paste</h2>
+<p>Every address starts with the <b>base URL</b> and the business endpoints sit under <code>/api/v1</code>:</p>
+<table>
+  <tr><th>Thing</th><th>URL</th></tr>
+  <tr><td>Base URL</td><td><span class="url">http://localhost:8080</span></td></tr>
+  <tr><td>All API endpoints start with</td><td><span class="url">http://localhost:8080/api/v1</span></td></tr>
+  <tr><td><b>Swagger UI</b> (interactive tester)</td><td><span class="url">http://localhost:8080/swagger-ui.html</span></td></tr>
+  <tr><td>Health check</td><td><span class="url">http://localhost:8080/actuator/health</span></td></tr>
+  <tr><td>Raw API spec (JSON)</td><td><span class="url">http://localhost:8080/v3/api-docs</span></td></tr>
+</table>
+<p>So to create a task, the full URL you paste into Postman is:
+<br><span class="url">http://localhost:8080/api/v1/tasks</span></p>
+
+<!-- ===================== STEP 2 ===================== -->
+<div class="part" id="token"></div>
+<h2>Step 2 — The golden rule: get a token, then attach it</h2>
+<div class="box concept">
+  <span class="label">Why most requests “don’t work” at first</span>
+  <p>Only two endpoints are <span class="open">OPEN</span> 🔓 — <code>register</code> and <code>login</code>.
+  Everything else is <span class="lock">LOCKED</span> 🔒. To open the locked ones you must:</p>
+  <ol>
+    <li><b>Register</b> (or <b>login</b>). The response contains a long <code>"token"</code> string (a JWT).</li>
+    <li><b>Copy that token.</b></li>
+    <li><b>Attach it</b> to every other request as a header: <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+  </ol>
+  <p>That’s it. The token is your “I’m logged in” wristband; you flash it at the door each time.</p>
+</div>
+<p>A token looks like this (three chunks separated by dots) — yours will differ:</p>
+<pre><code>eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI1ZGM2YWRkNC1hMWIwL….8mdvJ7sD5P6HB6qih70dTZ…</code></pre>
+<div class="box why">
+  <span class="label">Good news — a ready-made test account</span>
+  <p>The dev database is pre-seeded with a demo user, so you can log in immediately without registering:</p>
+  <p><b>Email:</b> <code>demo@taskflow.com</code> &nbsp;·&nbsp; <b>Password:</b> <code>Password123!</code></p>
+  <p>It already owns two categories and five tasks — handy for trying the <code>GET</code> endpoints right away.</p>
+</div>
+
+<!-- ===================== METHOD A: SWAGGER ===================== -->
+<div class="part" id="swagger"></div>
+<h2>Method A — Swagger UI (easiest, no Postman needed)</h2>
+<p class="lead">Your app generates a clickable test page for itself. Start here — it’s the gentlest way to learn.</p>
+
+<div class="step"><b class="n">1</b>Open <span class="url">http://localhost:8080/swagger-ui.html</span> in your browser. You’ll see every
+endpoint grouped by feature (auth, user, category, task), each expandable.</div>
+<div class="step"><b class="n">2</b><b>Log in to get a token.</b> Expand <code>POST /api/v1/auth/login</code> → click
+<b>“Try it out”</b> → in the body box type:
+<pre><code>{ "email": "demo@taskflow.com", "password": "Password123!" }</code></pre>
+→ click <b>Execute</b>. Scroll to the response and copy the value of <code>"token"</code> (the long string,
+without the surrounding quotes).</div>
+<div class="step"><b class="n">3</b><b>Tell Swagger to use the token.</b> Click the green <b>Authorize</b> 🔓 button near the
+top-right. Paste your token into the box and click <b>Authorize</b>, then <b>Close</b>. (Depending on the
+version, the box may already prepend “Bearer” — if it asks for the value only, just paste the token.)</div>
+<div class="step"><b class="n">4</b><b>Now test anything.</b> Every locked endpoint will work because Swagger attaches your token
+automatically. Try <code>GET /api/v1/tasks</code> → Try it out → Execute → you’ll see the demo user’s tasks.</div>
+
+<div class="box tip">
+  <span class="label">Tip</span>
+  <p>Swagger also <i>documents</i> the API: it shows exactly which fields each request accepts and what each
+  response looks like. When you forget a body shape, look it up here rather than guessing.</p>
+</div>
+
+<!-- ===================== METHOD B: POSTMAN ===================== -->
+<div class="part" id="postman"></div>
+<h2>Method B — Postman, click by click</h2>
+<p class="lead">Postman is a standalone app for sending requests. Here’s the exact sequence you were missing.</p>
+
+<h3>B1 · Register or log in (an OPEN request)</h3>
+<div class="step"><b class="n">1</b>Click <b>+</b> to open a new request tab.</div>
+<div class="step"><b class="n">2</b>Set the method dropdown (left of the URL bar) to <b>POST</b>.</div>
+<div class="step"><b class="n">3</b>In the URL bar, paste:
+<p><span class="url">http://localhost:8080/api/v1/auth/login</span></p></div>
+<div class="step"><b class="n">4</b>Click the <b>Body</b> tab (under the URL bar) → choose <b>raw</b> → in the dropdown on the
+right (it says “Text”) choose <b>JSON</b>. <b>This step is critical</b> — it tells the server you’re sending JSON.</div>
+<div class="step"><b class="n">5</b>Paste the body:
+<pre><code>{ "email": "demo@taskflow.com", "password": "Password123!" }</code></pre></div>
+<div class="step"><b class="n">6</b>Click <b>Send</b>. In the response pane (bottom) you’ll get <code>200</code> and a JSON body.
+<b>Copy the <code>token</code> value.</b></div>
+
+<div class="box gotcha">
+  <span class="label">The #1 Postman mistake</span>
+  <p>If you skip step 4 (leaving Body as “Text” instead of “JSON”), the server doesn’t recognise your JSON and
+  you’ll get a <code>415</code> or <code>400</code> error. Always set <b>raw → JSON</b> for POST/PUT requests.</p>
+</div>
+
+<h3>B2 · Call a LOCKED endpoint (attach the token)</h3>
+<div class="step"><b class="n">1</b>New request → method <b>GET</b> → URL <span class="url">http://localhost:8080/api/v1/tasks</span></div>
+<div class="step"><b class="n">2</b>Click the <b>Authorization</b> tab → <b>Type</b> dropdown → choose <b>Bearer Token</b>.</div>
+<div class="step"><b class="n">3</b>Paste <b>just the token</b> into the “Token” box on the right. (Postman adds the word
+<code>Bearer</code> for you — don’t type it yourself here.)</div>
+<div class="step"><b class="n">4</b>Click <b>Send</b>. You should get <code>200</code> and a list of tasks. You’re in. 🎉</div>
+
+<div class="box tip">
+  <span class="label">Pro tip — stop copy-pasting the token every time</span>
+  <p>In Postman, create an <b>Environment</b> with a variable called <code>token</code>. Paste your token as its
+  value once. Then in any request’s Authorization → Bearer Token box, type <code>{{token}}</code>. Now every
+  request reuses it. (Advanced: a small “Tests” script on the login request can capture the token automatically —
+  ask me and I’ll give you the snippet.)</p>
+</div>
+
+<h3>B3 · Creating things (POST/PUT with a body + a token)</h3>
+<p>For <code>POST /api/v1/tasks</code> you need <b>both</b> a JSON body (B1, step 4–5) <b>and</b> the Bearer token
+(B2, step 2–3). Example body:</p>
+<pre><code>{ "title": "Buy milk", "priority": "LOW", "dueDate": "2026-07-01T09:00:00Z" }</code></pre>
+
+<!-- ===================== METHOD C: CURL ===================== -->
+<div class="part" id="curl"></div>
+<h2>Method C — curl (command line)</h2>
+<p>If you prefer the terminal, <code>curl</code> sends the same requests. Register/login first, copy the token,
+then pass it with <code>-H "Authorization: Bearer …"</code>.</p>
+<pre><code># 1) Log in and see the token
+curl -X POST http://localhost:8080/api/v1/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"demo@taskflow.com","password":"Password123!"}'
+
+# 2) Use the token (paste it in place of THE_TOKEN)
+curl http://localhost:8080/api/v1/tasks \
+     -H "Authorization: Bearer THE_TOKEN"
+
+# 3) Create a task
+curl -X POST http://localhost:8080/api/v1/tasks \
+     -H "Authorization: Bearer THE_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"title":"Buy milk","priority":"LOW"}'</code></pre>
+<p class="small">On Windows <code>cmd</code>, use <code>^</code> instead of <code>\</code> for line breaks, or just put the
+whole command on one line.</p>
+
+<!-- ===================== ENDPOINT REFERENCE ===================== -->
+<div class="part" id="reference"></div>
+<h2>Full endpoint reference</h2>
+<p class="lead">Every endpoint in the app today. 🔓 = open (no token). 🔒 = needs a Bearer token.</p>
+
+<h3>Auth — getting in</h3>
+<div class="ep">
+  <div class="top"><span class="method post">POST</span>/api/v1/auth/register <span class="auth open">🔓 OPEN</span></div>
+  <div class="in">
+  <p>Create a new account. Returns <code>201</code> with a token + your user info.</p>
+  <p><b>Body:</b></p>
+  <pre><code>{ "email": "you@example.com", "password": "Password123", "displayName": "Your Name" }</code></pre>
+  <p class="small">Rules: valid email; password 8–72 chars; displayName required. Duplicate email → <code>409</code>.</p>
+  </div>
+</div>
+<div class="ep">
+  <div class="top"><span class="method post">POST</span>/api/v1/auth/login <span class="auth open">🔓 OPEN</span></div>
+  <div class="in">
+  <p>Exchange email + password for a token. Returns <code>200</code>.</p>
+  <pre><code>{ "email": "you@example.com", "password": "Password123" }</code></pre>
+  <p><b>Response shape (register &amp; login):</b></p>
+  <pre><code>{ "token": "eyJ…", "tokenType": "Bearer",
+  "user": { "id": "…", "email": "…", "displayName": "…", "createdAt": "…" } }</code></pre>
+  </div>
+</div>
+
+<h3>User</h3>
+<div class="ep">
+  <div class="top"><span class="method get">GET</span>/api/v1/users/me <span class="auth lock">🔒 token</span></div>
+  <div class="in"><p>Returns <i>your own</i> profile (decided by the token, not by any parameter). <code>200</code>.</p></div>
+</div>
+
+<h3>Categories</h3>
+<div class="ep">
+  <div class="top"><span class="method get">GET</span>/api/v1/categories <span class="auth lock">🔒 token</span></div>
+  <div class="in"><p>List <i>your</i> categories. <code>200</code> → an array of <code>{ id, name, color }</code>.</p></div>
+</div>
+<div class="ep">
+  <div class="top"><span class="method post">POST</span>/api/v1/categories <span class="auth lock">🔒 token</span></div>
+  <div class="in"><p>Create a category. <code>201</code>.</p>
+  <pre><code>{ "name": "Work", "color": "#3B82F6" }</code></pre>
+  <p class="small">name required (≤100 chars); color optional (≤20 chars). There is no “owner” field — it’s taken from your token.</p></div>
+</div>
+<div class="ep">
+  <div class="top"><span class="method get">GET</span>/api/v1/categories/{id} <span class="auth lock">🔒 token</span></div>
+  <div class="in"><p>Get one of your categories by its id. Not yours / not found → <code>404</code>.</p></div>
+</div>
+<div class="ep">
+  <div class="top"><span class="method put">PUT</span>/api/v1/categories/{id} <span class="auth lock">🔒 token</span></div>
+  <div class="in"><p>Replace a category’s fields. <code>200</code>. Same body shape as create.</p></div>
+</div>
+<div class="ep">
+  <div class="top"><span class="method delete">DELETE</span>/api/v1/categories/{id} <span class="auth lock">🔒 token</span></div>
+  <div class="in"><p>Delete a category. <code>204</code> (empty body). Its tasks survive, just uncategorised.</p></div>
+</div>
+
+<h3>Tasks</h3>
+<div class="ep">
+  <div class="top"><span class="method get">GET</span>/api/v1/tasks <span class="auth lock">🔒 token</span></div>
+  <div class="in"><p>List <i>your</i> tasks. <code>200</code> → an array of task objects (each with its category nested, or null).</p></div>
+</div>
+<div class="ep">
+  <div class="top"><span class="method post">POST</span>/api/v1/tasks <span class="auth lock">🔒 token</span></div>
+  <div class="in"><p>Create a task. <code>201</code>.</p>
+  <pre><code>{
+  "title": "Write report",          // required (≤255 chars)
+  "description": "Q3 numbers",       // optional
+  "status": "TODO",                  // optional: TODO | IN_PROGRESS | DONE  (default TODO)
+  "priority": "HIGH",                // optional: LOW | MEDIUM | HIGH        (default MEDIUM)
+  "dueDate": "2026-07-01T09:00:00Z", // optional, ISO-8601 UTC instant
+  "categoryId": "575f2a01-…"         // optional; must be one of YOUR categories
+}</code></pre>
+  <p class="small">Smallest valid body: <code>{ "title": "Anything" }</code>. An unknown status/priority value → <code>400</code>.</p></div>
+</div>
+<div class="ep">
+  <div class="top"><span class="method get">GET</span>/api/v1/tasks/{id} <span class="auth lock">🔒 token</span></div>
+  <div class="in"><p>Get one of your tasks. Not yours / not found → <code>404</code>.</p></div>
+</div>
+<div class="ep">
+  <div class="top"><span class="method put">PUT</span>/api/v1/tasks/{id} <span class="auth lock">🔒 token</span></div>
+  <div class="in"><p>Replace a task’s fields. <code>200</code>. Same body shape as create.</p></div>
+</div>
+<div class="ep">
+  <div class="top"><span class="method patch">PATCH</span>/api/v1/tasks/{id}/complete <span class="auth lock">🔒 token</span></div>
+  <div class="in"><p><b>Toggles</b> done-state. No body needed. If the task isn’t DONE it becomes DONE (and stamps
+  <code>completedAt</code>); if it is DONE it flips back to TODO (and clears <code>completedAt</code>). <code>200</code>.</p></div>
+</div>
+<div class="ep">
+  <div class="top"><span class="method delete">DELETE</span>/api/v1/tasks/{id} <span class="auth lock">🔒 token</span></div>
+  <div class="in"><p>Delete a task. <code>204</code> (empty body).</p></div>
+</div>
+
+<!-- ===================== ERRORS ===================== -->
+<div class="part" id="errors"></div>
+<h2>Understanding responses &amp; fixing errors</h2>
+<p>The <b>status code</b> tells you what happened. 2xx = good; 4xx = something about <i>your request</i>; 5xx = the server broke.</p>
+<table>
+  <tr><th>Code</th><th>Meaning</th><th>Typical cause / fix</th></tr>
+  <tr><td><b>200</b> OK</td><td>Success (read/update).</td><td>All good.</td></tr>
+  <tr><td><b>201</b> Created</td><td>A new thing was created.</td><td>Returned by register, POST category, POST task.</td></tr>
+  <tr><td><b>204</b> No Content</td><td>Success, nothing to return.</td><td>Returned by DELETE. Empty body is expected.</td></tr>
+  <tr><td><b>400</b> Bad Request</td><td>Your input broke a rule.</td><td>Missing <code>title</code>, password too short, bad enum value, or a <code>categoryId</code> that isn’t yours.</td></tr>
+  <tr><td><b>401</b> Unauthorized</td><td>No valid token.</td><td>You forgot the <code>Authorization</code> header, or the token is wrong/expired (tokens last 24h). Log in again.</td></tr>
+  <tr><td><b>403</b> Forbidden</td><td>Authenticated but not allowed.</td><td>Rare here; usually means a config/path issue.</td></tr>
+  <tr><td><b>404</b> Not Found</td><td>No such resource (or not yours).</td><td>Wrong id, or you’re asking for another user’s item — by design it looks identical to “doesn’t exist.”</td></tr>
+  <tr><td><b>409</b> Conflict</td><td>Clashes with existing data.</td><td>Registering an email that already exists.</td></tr>
+  <tr><td><b>415</b> Unsupported Media Type</td><td>Body wasn’t sent as JSON.</td><td>In Postman set Body → raw → <b>JSON</b>. In curl add <code>-H "Content-Type: application/json"</code>.</td></tr>
+  <tr><td><b>500</b> Server Error</td><td>The app threw an unexpected error.</td><td>Check the app’s terminal log for the stack trace.</td></tr>
+</table>
+<div class="box concept">
+  <span class="label">Concept — the token expires</span>
+  <p>Tokens are valid for <b>24 hours</b>. If calls that worked yesterday suddenly return <code>401</code>, your
+  token expired — just log in again and use the new one.</p>
+</div>
+
+<!-- ===================== TROUBLESHOOTING ===================== -->
+<div class="part" id="trouble"></div>
+<h2>Troubleshooting checklist</h2>
+<table>
+  <tr><th>Symptom</th><th>Most likely cause &amp; fix</th></tr>
+  <tr><td>“Could not get response / Connection refused”</td><td>The app isn’t running, or you used the wrong port. Restart <code>./mvnw spring-boot:run</code> and confirm <span class="url">http://localhost:8080/actuator/health</span> shows <code>{"status":"UP"}</code>.</td></tr>
+  <tr><td>Everything returns <b>401</b></td><td>You didn’t attach the token, attached it wrong (typed “Bearer” twice), or it expired. Re-login; in Postman use Authorization → Bearer Token and paste only the token.</td></tr>
+  <tr><td><b>400</b> on POST/PUT</td><td>A validation rule failed (missing <code>title</code>, short password) <i>or</i> the body wasn’t JSON. Check the message in the response and that Body = raw → JSON.</td></tr>
+  <tr><td>App won’t start: “relation … does not exist” or migration error</td><td>The database container isn’t up or isn’t migrated. Run <code>docker compose up -d postgres</code> and restart the app so Flyway runs.</td></tr>
+  <tr><td>App won’t start: port 8080 already in use</td><td>An old run is still alive. Stop it (close its terminal) or kill whatever holds port 8080, then start again.</td></tr>
+  <tr><td>Login fails for the demo user</td><td>Make sure you’re on the <b>dev</b> profile (the default) — only dev seeds the demo data. Password is <code>Password123!</code> (with the “!”).</td></tr>
+  <tr><td>Can’t reach Swagger</td><td>Use exactly <span class="url">http://localhost:8080/swagger-ui.html</span> and make sure the app is running.</td></tr>
+</table>
+
+<hr>
+<p class="small">TaskFlow API testing guide · base URL <span class="url">http://localhost:8080</span> ·
+endpoints under <code>/api/v1</code> · reflects the app after Phase 7. New endpoints (filtering, analytics) will
+be added in later phases — re-check Swagger, which always shows the current, live list.</p>
+
+</body>
+</html>
