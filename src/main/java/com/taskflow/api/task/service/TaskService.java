@@ -3,6 +3,8 @@ package com.taskflow.api.task.service;
 import com.taskflow.api.category.entity.Category;
 import com.taskflow.api.category.repository.CategoryRepository;
 import com.taskflow.api.common.dto.PageResponse;
+import com.taskflow.api.common.exception.BadRequestException;
+import com.taskflow.api.common.exception.NotFoundException;
 import com.taskflow.api.task.dto.TaskRequest;
 import com.taskflow.api.task.dto.TaskResponse;
 import com.taskflow.api.task.entity.Priority;
@@ -15,10 +17,8 @@ import com.taskflow.api.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -169,12 +169,12 @@ public class TaskService {
             return null;
         }
         return categoryRepository.findByIdAndOwnerId(categoryId, ownerId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "category not found"));
+                .orElseThrow(() -> new BadRequestException("Category not found"));
     }
 
     /** The ownership gate — 404 if the task doesn't exist or isn't the caller's. */
     private Task getOwnedOrThrow(UUID ownerId, UUID id) {
         return taskRepository.findByIdAndOwnerId(id, ownerId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+                .orElseThrow(() -> new NotFoundException("Task not found"));
     }
 }

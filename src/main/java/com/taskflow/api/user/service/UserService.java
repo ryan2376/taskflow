@@ -1,11 +1,10 @@
 package com.taskflow.api.user.service;
 
+import com.taskflow.api.common.exception.NotFoundException;
 import com.taskflow.api.user.entity.User;
 import com.taskflow.api.user.repository.UserRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -34,6 +33,6 @@ public class UserService {
     @Transactional(readOnly = true)
     public User getById(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 }
