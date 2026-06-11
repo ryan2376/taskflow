@@ -3,14 +3,14 @@ package com.taskflow.api.auth.service;
 import com.taskflow.api.auth.dto.AuthResponse;
 import com.taskflow.api.auth.dto.LoginRequest;
 import com.taskflow.api.auth.dto.RegisterRequest;
+import com.taskflow.api.common.exception.ConflictException;
+import com.taskflow.api.common.exception.UnauthorizedException;
 import com.taskflow.api.user.dto.UserResponse;
 import com.taskflow.api.user.entity.User;
 import com.taskflow.api.user.repository.UserRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Handles registration and login: the only places that create users or issue tokens.
@@ -41,7 +41,7 @@ public class AuthService {
         String email = request.email().trim().toLowerCase();
 
         if (userRepository.existsByEmail(email)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
+            throw new ConflictException("Email already registered");
         }
 
         User user = User.builder()
@@ -68,10 +68,10 @@ public class AuthService {
         String email = request.email().trim().toLowerCase();
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+            throw new UnauthorizedException("Invalid email or password");
         }
 
         String token = jwtService.generateToken(user.getId(), user.getEmail());

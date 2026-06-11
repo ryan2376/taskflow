@@ -5,11 +5,10 @@ import com.taskflow.api.category.dto.CategoryResponse;
 import com.taskflow.api.category.entity.Category;
 import com.taskflow.api.category.mapper.CategoryMapper;
 import com.taskflow.api.category.repository.CategoryRepository;
+import com.taskflow.api.common.exception.NotFoundException;
 import com.taskflow.api.user.repository.UserRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -84,6 +83,6 @@ public class CategoryService {
      */
     private Category getOwnedOrThrow(UUID ownerId, UUID id) {
         return categoryRepository.findByIdAndOwnerId(id, ownerId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
+                .orElseThrow(() -> new NotFoundException("Category not found"));
     }
 }
