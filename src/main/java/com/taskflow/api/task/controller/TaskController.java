@@ -1,9 +1,16 @@
 package com.taskflow.api.task.controller;
 
+import com.taskflow.api.common.dto.PageResponse;
 import com.taskflow.api.task.dto.TaskRequest;
 import com.taskflow.api.task.dto.TaskResponse;
+import com.taskflow.api.task.entity.Priority;
+import com.taskflow.api.task.entity.TaskStatus;
 import com.taskflow.api.task.service.TaskService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,10 +22,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -36,10 +44,32 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-    /** GET /api/v1/tasks — list MY tasks (no filtering yet; that's Phase 8). */
+    /**
+     * GET /api/v1/tasks — list MY tasks, with optional filters and pagination.
+     *
+     * <p>Every query parameter is optional; Spring binds each one automatically:
+     * <ul>
+     *   <li>{@code status}, {@code priority} — text like "DONE"/"HIGH" → the matching enum.</li>
+     *   <li>{@code categoryId} — parsed into a UUID.</li>
+     *   <li>{@code dueBefore} — an ISO-8601 instant such as {@code 2026-07-01T09:00:00Z};
+     *       {@code @DateTimeFormat} tells Spring how to read it.</li>
+     *   <li>{@code search} — free text matched against title/description.</li>
+     *   <li>{@code page}, {@code size}, {@code sort} — Spring folds these into a
+     *       {@link Pageable}. {@code @PageableDefault} supplies defaults (20 per page,
+     *       newest first) when omitted. Example: {@code ?page=0&size=10&sort=dueDate,asc}.</li>
+     * </ul>
+     */
     @GetMapping
-    public List<TaskResponse> list(@AuthenticationPrincipal UUID userId) {
-        return taskService.getAll(userId);
+    public PageResponse<TaskResponse> list(
+            @AuthenticationPrincipal UUID userId,
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) Priority priority,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant dueBefore,
+            @RequestParam(required = false) String search,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return taskService.search(userId, status, priority, categoryId, dueBefore, search, pageable);
     }
 
     /** POST /api/v1/tasks — create one. 201 Created. */

@@ -2,6 +2,7 @@ package com.taskflow.api.task.service;
 
 import com.taskflow.api.category.entity.Category;
 import com.taskflow.api.category.repository.CategoryRepository;
+import com.taskflow.api.common.dto.PageResponse;
 import com.taskflow.api.task.dto.TaskRequest;
 import com.taskflow.api.task.dto.TaskResponse;
 import com.taskflow.api.task.entity.Priority;
@@ -9,14 +10,17 @@ import com.taskflow.api.task.entity.Task;
 import com.taskflow.api.task.entity.TaskStatus;
 import com.taskflow.api.task.mapper.TaskMapper;
 import com.taskflow.api.task.repository.TaskRepository;
+import com.taskflow.api.task.spec.TaskSpecifications;
 import com.taskflow.api.user.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -41,11 +45,41 @@ public class TaskService {
         this.taskMapper = taskMapper;
     }
 
+    /**
+     * List the owner's tasks — optionally filtered, always paginated.
+     *
+     * <p>We BUILD the query by composing Specification pieces: ownerEquals is mandatory;
+     * each other filter is added only when its value was supplied (the helpers return
+     * null otherwise, and Spring skips nulls when combining). {@code findAll(spec, pageable)}
+     * comes from JpaSpecificationExecutor — it runs the combined WHERE plus the page's
+     * limit/offset/sort as ONE SQL query, and also reports the total row count for the
+     * pagination metadata.
+     */
     @Transactional(readOnly = true)
-    public List<TaskResponse> getAll(UUID ownerId) {
-        return taskRepository.findByOwnerId(ownerId).stream()
-                .map(taskMapper::toResponse)
-                .toList();
+    public PageResponse<TaskResponse> search(UUID ownerId,
+                                             TaskStatus status,
+                                             Priority priority,
+                                             UUID categoryId,
+                                             Instant dueBefore,
+                                             String search,
+                                             Pageable pageable) {
+        // allOf(...) AND-combines every piece into one Specification, ignoring the nulls
+        // (the filters the caller didn't supply). ownerEquals is the only one always present.
+        Specification<Task> spec = Specification.allOf(
+                TaskSpecifications.ownerEquals(ownerId),
+                TaskSpecifications.statusEquals(status),
+                TaskSpecifications.priorityEquals(priority),
+                TaskSpecifications.categoryEquals(categoryId),
+                TaskSpecifications.dueBefore(dueBefore),
+                TaskSpecifications.textContains(search));
+
+        // findAll returns a Page<Task>; .map converts each row to a DTO while preserving
+        // the page metadata. Mapping runs inside this read-only transaction, so the lazy
+        // category on each task loads cleanly.
+        Page<TaskResponse> page = taskRepository.findAll(spec, pageable)
+                .map(taskMapper::toResponse);
+
+        return PageResponse.from(page);
     }
 
     @Transactional(readOnly = true)
