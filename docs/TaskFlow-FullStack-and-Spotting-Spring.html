@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TaskFlow — Full-Stack Walkthrough &amp; Spotting Spring in the Code</title>
+<style>
+  :root{
+    --ink:#1f2933;--muted:#52606d;--line:#cbd2d9;--soft:#f5f7fa;
+    --blue:#2563eb;--blue-bg:#eff6ff;--green:#047857;--green-bg:#ecfdf5;
+    --purple:#7c3aed;--purple-bg:#f5f3ff;--amber:#b45309;--amber-bg:#fffbeb;--code-bg:#f6f8fa;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;color:var(--ink);line-height:1.55;font-size:11pt;margin:0;}
+  @page{size:A4;margin:18mm 15mm;}
+  h1,h2,h3,h4{line-height:1.25;color:#102a43;}
+  h1{font-size:25pt;margin:0 0 6px;}
+  h2{font-size:17pt;margin:30px 0 10px;padding-bottom:6px;border-bottom:3px solid var(--blue);}
+  h3{font-size:13pt;margin:20px 0 6px;color:var(--blue);}
+  p{margin:8px 0;} ul,ol{margin:8px 0 8px 22px;} li{margin:3px 0;}
+  code{font-family:"Cascadia Code",Consolas,"Courier New",monospace;font-size:9.5pt;background:var(--soft);padding:1px 5px;border-radius:4px;color:#0b3d2e;}
+  pre{background:var(--code-bg);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:6px;padding:10px 12px;overflow-x:auto;margin:9px 0;break-inside:avoid;}
+  pre code{background:none;padding:0;font-size:8.7pt;color:var(--ink);line-height:1.5;}
+  .lead{font-size:12pt;color:var(--muted);}
+  .box{border-radius:8px;padding:11px 14px;margin:12px 0;break-inside:avoid;border:1px solid;}
+  .box p:first-child{margin-top:0;} .box p:last-child{margin-bottom:0;}
+  .concept{background:var(--blue-bg);border-color:#bfdbfe;}
+  .why{background:var(--green-bg);border-color:#a7f3d0;}
+  .analogy{background:var(--purple-bg);border-color:#ddd6fe;}
+  .box .label{font-weight:700;font-size:9.5pt;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px;}
+  .concept .label{color:var(--blue);} .why .label{color:var(--green);} .analogy .label{color:var(--purple);}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:9.3pt;break-inside:avoid;}
+  th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top;}
+  th{background:var(--soft);color:#102a43;}
+  .part{page-break-before:always;}
+  .cover{text-align:center;padding:54px 0 22px;}
+  .cover .sub{color:var(--muted);font-size:13pt;margin-top:4px;}
+  .cover .meta{margin-top:22px;font-size:10pt;color:var(--muted);}
+  .ascii{font-family:"Cascadia Code",Consolas,monospace;font-size:8.3pt;white-space:pre;line-height:1.35;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:12px;overflow-x:auto;break-inside:avoid;}
+  .small{font-size:9pt;color:var(--muted);}
+  .spot{border:1px solid var(--line);border-radius:10px;margin:14px 0;break-inside:avoid;overflow:hidden;}
+  .spot .hd{background:#102a43;color:#fff;padding:7px 13px;font-size:11pt;font-weight:700;}
+  .spot .hd .where{float:right;font-family:"Cascadia Code",Consolas,monospace;font-size:8pt;opacity:.85;font-weight:500;}
+  .spot .bd{padding:6px 13px 11px;}
+  .tell{background:#fff7ed;border-left:3px solid var(--amber);padding:6px 10px;border-radius:4px;margin:6px 0;font-size:9.7pt;}
+  .tell b{color:var(--amber);}
+  .pill{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:3px 12px;margin:3px;font-size:9pt;}
+  hr{border:none;border-top:1px solid var(--line);margin:18px 0;}
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>TaskFlow — Full-Stack Walkthrough</h1>
+  <div class="sub">How the Next.js frontend links to the Spring API, &amp;<br>how to <b>spot</b> Spring building blocks in the actual code</div>
+  <div class="meta">
+    Written for someone who knows the words (DTO, repository, service…) but finds them<br>
+    hard to point at in real code. We fix that with your project's own files.<br>
+    Covers Phases 1–10 + the frontend · Generated 11 June 2026
+  </div>
+  <div style="margin-top:20px;">
+    <span class="pill">Spring Boot API</span><span class="pill">Next.js + Tailwind</span><span class="pill">JWT</span><span class="pill">CORS</span><span class="pill">JPA</span>
+  </div>
+</div>
+
+<div class="box concept">
+  <span class="label">How to get the most from this guide</span>
+  <p><b>Part 4 is the one you asked for</b> — a "spot-the-pattern" field guide: for each Spring concept it shows the
+  <i>tell-tale sign</i> to look for, what it does, and <b>the exact file in your project</b> where it lives, with the
+  real snippet. Parts 1–3 explain how the two apps (frontend + backend) talk to each other, traced through one real
+  button click. Open the files side-by-side with this PDF as you read.</p>
+</div>
+
+<!-- ============ PART 1 ============ -->
+<div class="part"></div>
+<h2>Part 1 — Two apps, one system</h2>
+<p class="lead">TaskFlow is really two programs that talk over HTTP.</p>
+<div class="ascii">┌─────────────────────────────┐         HTTP + JSON          ┌─────────────────────────────┐
+│   FRONTEND (the browser)    │  ───────────────────────▶   │   BACKEND (the server)      │
+│   Next.js + React + Tailwind│   fetch() with a JWT token   │   Spring Boot API           │
+│   http://localhost:3000     │   ◀───────────────────────  │   http://localhost:8080     │
+│   folder: /frontend         │        JSON responses        │   /api/v1/...               │
+└─────────────────────────────┘                              └──────────────┬──────────────┘
+                                                                             │ JPA / SQL
+                                                                  ┌──────────▼──────────┐
+                                                                  │  PostgreSQL (Docker)│
+                                                                  │  localhost:5433     │
+                                                                  └─────────────────────┘</div>
+<ul>
+  <li><b>Frontend</b> = what the user sees and clicks. It holds NO database access and NO secrets. It only knows how
+  to call the API and render what comes back.</li>
+  <li><b>Backend</b> = the brain + the data. It enforces the rules (auth, ownership) and is the only thing that
+  touches the database.</li>
+</ul>
+<div class="box analogy">
+  <span class="label">Analogy</span>
+  <p>The frontend is the <b>dining room</b> (menus, tables, what the customer touches). The backend is the
+  <b>kitchen + storeroom</b> (the cooking rules and the ingredients). They communicate through a <b>serving hatch</b>
+  — that hatch is HTTP, and the language passed through it is JSON.</p>
+</div>
+
+<!-- ============ PART 2 ============ -->
+<div class="part"></div>
+<h2>Part 2 — The four things that make the link work</h2>
+
+<h3>2.1 CORS — the browser's permission slip</h3>
+<p>Browsers block a page on one origin (<code>localhost:3000</code>) from calling a different origin
+(<code>localhost:8080</code>) unless the server explicitly allows it. That permission is <b>CORS</b>.</p>
+<div class="spot"><div class="hd">Where we allow it <span class="where">config/CorsConfig.java</span></div>
+<div class="bd">
+<pre><code>config.setAllowedOrigins(allowedOrigins);   // includes http://localhost:3000
+config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+config.setAllowedHeaders(List.of("*"));     // notably Authorization (our token)</code></pre>
+<p class="small">Without this, every call from the frontend would fail in the browser with a CORS error — even though
+the API itself is fine. This is the #1 gotcha when a frontend "can't reach" a working backend.</p>
+</div></div>
+
+<h3>2.2 JWT — the "I'm logged in" wristband</h3>
+<p>HTTP is stateless: the server forgets you between requests. So after login the server hands the browser a signed
+token (a <b>JWT</b>). The browser sends it back on every request to prove who it is.</p>
+<div class="ascii">1. User submits email+password   ──▶  POST /api/v1/auth/login
+2. Server verifies, returns a JWT ◀──  { "token": "eyJ...", "user": {...} }
+3. Frontend stores the token (localStorage)
+4. Every later request carries it:     Authorization: Bearer eyJ...
+5. Server reads the token, knows the user, allows the request</div>
+
+<h3>2.3 The API client — the single bridge file</h3>
+<p>Instead of scattering <code>fetch()</code> calls everywhere, the frontend funnels them all through one helper.
+This is where the token gets attached and errors get unwrapped.</p>
+<div class="spot"><div class="hd">The bridge <span class="where">frontend/src/lib/api.ts</span></div>
+<div class="bd">
+<pre><code>async function request&lt;T&gt;(path, options) {
+  const headers = { ...options.headers };
+  if (options.body) headers["Content-Type"] = "application/json";
+  const token = getToken();                          // from localStorage
+  if (token) headers["Authorization"] = `Bearer ${token}`;   // ← the link!
+  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  ...
+}
+export const apiToggleComplete = (id) =>
+  request&lt;Task&gt;(`/tasks/${id}/complete`, { method: "PATCH" });</code></pre>
+<p class="small"><code>BASE</code> = <code>http://localhost:8080/api/v1</code>. Every <code>apiXxx()</code> function maps
+1:1 to a backend endpoint, so the frontend reads like a list of the API's capabilities.</p>
+</div></div>
+
+<h3>2.4 The request/response cycle</h3>
+<p>A frontend action becomes an HTTP request, travels through the backend layers, and returns JSON the UI re-renders.
+Part 3 traces exactly that for one click.</p>
+
+<!-- ============ PART 3 ============ -->
+<div class="part"></div>
+<h2>Part 3 — One click, traced end-to-end</h2>
+<p class="lead">You click <b>“Done”</b> on a task. Here is every hop, with the real code at each.</p>
+<table>
+  <tr><th>#</th><th>Where (file)</th><th>What happens</th></tr>
+  <tr><td>1</td><td><code>frontend/src/app/tasks/page.tsx</code></td><td>The button's <code>onClick</code> calls <code>toggle(id)</code> → <code>await apiToggleComplete(id)</code>.</td></tr>
+  <tr><td>2</td><td><code>frontend/src/lib/api.ts</code></td><td><code>request()</code> attaches <code>Authorization: Bearer &lt;token&gt;</code> and does <code>fetch(PATCH /tasks/{id}/complete)</code>.</td></tr>
+  <tr><td>3</td><td><code>config/CorsConfig.java</code></td><td>Browser's CORS check passes (origin :3000 is allowed).</td></tr>
+  <tr><td>4</td><td><code>auth/filter/JwtAuthFilter.java</code></td><td>Reads the token, verifies its signature, extracts the user id, marks the request as that user.</td></tr>
+  <tr><td>5</td><td><code>config/SecurityConfig.java</code></td><td>Rule check: <code>/api/v1/**</code> needs auth → the request is authenticated → allowed.</td></tr>
+  <tr><td>6</td><td><code>task/controller/TaskController.java</code></td><td><code>@PatchMapping("/{id}/complete")</code> runs; <code>@AuthenticationPrincipal UUID userId</code> supplies the caller; calls the service.</td></tr>
+  <tr><td>7</td><td><code>task/service/TaskService.java</code></td><td><code>toggleComplete</code>: <code>getOwnedOrThrow</code> (404 if not yours), flips status, <code>applyStatus</code> updates <code>completedAt</code>, saves.</td></tr>
+  <tr><td>8</td><td><code>task/repository/TaskRepository.java</code></td><td><code>save()</code> → Hibernate turns it into an SQL <code>UPDATE</code>.</td></tr>
+  <tr><td>9</td><td>PostgreSQL</td><td>The row is updated.</td></tr>
+  <tr><td>10</td><td><code>task/mapper/TaskMapper.java</code></td><td>Converts the saved entity → <code>TaskResponse</code> DTO (nesting the category).</td></tr>
+  <tr><td>11</td><td>back in <code>tasks/page.tsx</code></td><td>The promise resolves; <code>load()</code> re-fetches; React re-renders the badge as DONE. No page reload.</td></tr>
+</table>
+<div class="box why"><span class="label">The takeaway</span>
+<p>Frontend → <b>api.ts</b> → (CORS) → <b>filter</b> → <b>controller</b> → <b>service</b> → <b>repository</b> → DB,
+then a DTO comes back. Every feature is this same pipeline. Learn it once; recognise it everywhere.</p></div>
+
+<!-- ============ PART 4 ============ -->
+<div class="part"></div>
+<h2>Part 4 — ⭐ How to spot Spring building blocks in the code</h2>
+<p class="lead">For each concept: the <b>tell</b> (what to look for), what it does, and where it lives in YOUR project.</p>
+
+<div class="spot"><div class="hd">CONTROLLER <span class="where">task/controller/TaskController.java</span></div>
+<div class="bd">
+<div class="tell"><b>The tell:</b> class annotated <code>@RestController</code> + <code>@RequestMapping("/api/v1/...")</code>, with methods marked <code>@GetMapping</code>/<code>@PostMapping</code>/<code>@PutMapping</code>/<code>@PatchMapping</code>/<code>@DeleteMapping</code>.</div>
+<p><b>Does:</b> the front door for HTTP. Maps a URL + verb to a method, reads the request, returns the response. Contains <i>no</i> business rules — it delegates to a service.</p>
+<pre><code>@RestController
+@RequestMapping("/api/v1/tasks")          // ← every method's URL starts here
+public class TaskController {
+    @PatchMapping("/{id}/complete")        // ← PATCH /api/v1/tasks/{id}/complete
+    public TaskResponse complete(@AuthenticationPrincipal UUID userId,
+                                 @PathVariable UUID id) {
+        return taskService.toggleComplete(userId, id);   // ← hands off to the service
+    }
+}</code></pre>
+<p class="small">Also notice <code>@AuthenticationPrincipal</code> (the logged-in user's id), <code>@PathVariable</code>
+(part of the URL), <code>@RequestBody</code> (the JSON body), <code>@RequestParam</code> (query params like <code>?status=</code>).</p>
+</div></div>
+
+<div class="spot"><div class="hd">DTO (Data Transfer Object) <span class="where">task/dto/TaskRequest.java, TaskResponse.java</span></div>
+<div class="bd">
+<div class="tell"><b>The tell:</b> a Java <code>record</code> living in a <code>dto/</code> package. <b>No</b> <code>@Entity</code>. Often has validation annotations (<code>@NotBlank</code>, <code>@Size</code>). It's the <i>shape of the JSON</i> in or out.</div>
+<p><b>Does:</b> defines exactly what the outside world sends/receives — deliberately separate from the database entity (so internal fields like a password hash can never leak).</p>
+<pre><code>public record TaskRequest(                 // ← "record" + dto package = a DTO
+    @NotBlank @Size(max = 255) String title,   // ← validation rules
+    String description,
+    TaskStatus status, Priority priority,
+    Instant dueDate, UUID categoryId
+) {}</code></pre>
+<p class="small">Rule of thumb: <b>Request</b> DTO = data coming IN; <b>Response</b> DTO = data going OUT. If it's a
+<code>record</code> and it's in <code>dto/</code>, it's a DTO.</p>
+</div></div>
+
+<div class="spot"><div class="hd">ENTITY <span class="where">task/entity/Task.java, user/entity/User.java</span></div>
+<div class="bd">
+<div class="tell"><b>The tell:</b> class annotated <code>@Entity</code> + <code>@Table(name="...")</code>, fields with <code>@Id</code>, <code>@Column</code>, <code>@ManyToOne</code>. Lives in an <code>entity/</code> package.</div>
+<p><b>Does:</b> one entity object = one row in a database table. This is the in-memory mirror of your data.</p>
+<pre><code>@Entity
+@Table(name = "tasks")                     // ← maps to the 'tasks' table
+public class Task {
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+    @Column(nullable = false) private String title;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "owner_id")
+    private User owner;                    // ← a relationship to another table
+}</code></pre>
+<p class="small"><code>@ManyToOne</code> = "many tasks belong to one user." That's a foreign key, expressed in Java.</p>
+</div></div>
+
+<div class="spot"><div class="hd">REPOSITORY <span class="where">task/repository/TaskRepository.java</span></div>
+<div class="bd">
+<div class="tell"><b>The tell:</b> an <code>interface</code> (not a class!) that <code>extends JpaRepository&lt;Entity, IdType&gt;</code>. It has method <i>signatures</i> but <b>no bodies</b> — you never write the implementation.</div>
+<p><b>Does:</b> all database reads/writes. Spring generates the actual SQL at startup from the method names.</p>
+<pre><code>public interface TaskRepository
+        extends JpaRepository&lt;Task, UUID&gt; {          // ← gives save/findById/delete free
+    Optional&lt;Task&gt; findByIdAndOwnerId(UUID id, UUID ownerId);  // ← name → SQL WHERE
+    long countByOwnerIdAndStatus(UUID ownerId, TaskStatus status);
+}</code></pre>
+<p class="small">"Derived query": Spring reads <code>findByIdAndOwnerId</code> and writes
+<code>WHERE id=? AND owner_id=?</code> for you. An interface extending <code>JpaRepository</code> is <b>always</b> a repository.</p>
+</div></div>
+
+<div class="spot"><div class="hd">SERVICE <span class="where">task/service/TaskService.java</span></div>
+<div class="bd">
+<div class="tell"><b>The tell:</b> class annotated <code>@Service</code>, sitting in a <code>service/</code> package, often with <code>@Transactional</code> methods. It injects repositories/mappers in its constructor.</div>
+<p><b>Does:</b> the business rules — the "brain." Validates ownership, applies defaults, coordinates repository calls. The controller calls it; it calls the repository.</p>
+<pre><code>@Service
+public class TaskService {
+    private final TaskRepository taskRepository;     // ← injected dependency
+    public TaskService(TaskRepository taskRepository, ...) { ... }  // ← constructor injection
+
+    @Transactional                                   // ← all-or-nothing DB unit
+    public TaskResponse toggleComplete(UUID ownerId, UUID id) {
+        Task task = getOwnedOrThrow(ownerId, id);    // ← the ownership RULE lives here
+        ...
+    }
+}</code></pre>
+<p class="small">If you're looking for "where does the actual logic happen?" — it's the <code>@Service</code>. Controllers are thin; services are where decisions are made.</p>
+</div></div>
+
+<div class="spot"><div class="hd">MAPPER <span class="where">task/mapper/TaskMapper.java</span></div>
+<div class="bd">
+<div class="tell"><b>The tell:</b> a <code>@Component</code> in a <code>mapper/</code> package with methods like <code>toResponse(entity)</code> that build a DTO from an entity.</div>
+<p><b>Does:</b> translates between Entity (DB shape) and DTO (wire shape) in one reusable place.</p>
+<pre><code>@Component
+public class TaskMapper {
+    public TaskResponse toResponse(Task task) {      // ← Entity in, DTO out
+        return new TaskResponse(task.getId(), task.getTitle(), ...);
+    }
+}</code></pre>
+</div></div>
+
+<div class="spot"><div class="hd">CONFIG &amp; @Bean <span class="where">config/PasswordEncoderConfig.java</span></div>
+<div class="bd">
+<div class="tell"><b>The tell:</b> class annotated <code>@Configuration</code>, with methods annotated <code>@Bean</code>.</div>
+<p><b>Does:</b> hands Spring a ready-made shared object (a "bean") to inject elsewhere. Used for things you don't write as <code>@Service</code>/<code>@Component</code> (often library types).</p>
+<pre><code>@Configuration
+public class PasswordEncoderConfig {
+    @Bean                                            // ← "store this object in the container"
+    public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
+}</code></pre>
+</div></div>
+
+<div class="spot"><div class="hd">GLOBAL ERROR HANDLER <span class="where">common/exception/GlobalExceptionHandler.java</span></div>
+<div class="bd">
+<div class="tell"><b>The tell:</b> class annotated <code>@RestControllerAdvice</code> with methods annotated <code>@ExceptionHandler(SomeException.class)</code>.</div>
+<p><b>Does:</b> one global "catch block" for the whole API. Any exception a controller throws lands here and becomes a tidy JSON error.</p>
+<pre><code>@RestControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(ApiException.class)            // ← catches our NotFound/Conflict/etc.
+    public ResponseEntity&lt;ErrorResponse&gt; handleApi(ApiException ex, HttpServletRequest req) { ... }
+}</code></pre>
+</div></div>
+
+<div class="spot"><div class="hd">SPECIFICATIONS (dynamic filters) <span class="where">task/spec/TaskSpecifications.java</span></div>
+<div class="bd">
+<div class="tell"><b>The tell:</b> static methods returning <code>Specification&lt;Entity&gt;</code>, combined with <code>Specification.allOf(...)</code> in the service.</div>
+<p><b>Does:</b> builds <code>WHERE</code>-clause pieces at runtime so one endpoint supports many filter combinations (Phase 8).</p>
+<pre><code>public static Specification&lt;Task&gt; statusEquals(TaskStatus status) {
+    if (status == null) return null;                 // ← absent filter = skipped
+    return (root, query, cb) -&gt; cb.equal(root.get("status"), status);
+}</code></pre>
+</div></div>
+
+<div class="box concept"><span class="label">Dependency Injection — how to spot it everywhere</span>
+<p>You'll see this pattern in every service/controller: a <code>private final</code> field + a constructor that
+receives it. You <b>never</b> see <code>new TaskService(...)</code>. That's <b>dependency injection</b>: Spring
+creates one of each <code>@Service</code>/<code>@Component</code>/<code>@Bean</code> and passes them in automatically.
+When you see <code>private final X x;</code> set only in the constructor — that's an injected dependency.</p>
+</div>
+
+<!-- ============ PART 5 ============ -->
+<div class="part"></div>
+<h2>Part 5 — How to read ANY feature (the recipe)</h2>
+<p>When you open a feature and feel lost, read its files in this order. Using <b>tasks</b> as the example:</p>
+<table>
+  <tr><th>Step</th><th>Layer</th><th>File</th><th>Question it answers</th></tr>
+  <tr><td>1</td><td>Controller</td><td>task/controller/TaskController.java</td><td>What URLs exist? What goes in/out?</td></tr>
+  <tr><td>2</td><td>DTOs</td><td>task/dto/TaskRequest, TaskResponse</td><td>What's the exact JSON shape?</td></tr>
+  <tr><td>3</td><td>Service</td><td>task/service/TaskService.java</td><td>What are the rules? (ownership, defaults, the toggle)</td></tr>
+  <tr><td>4</td><td>Repository</td><td>task/repository/TaskRepository.java</td><td>How is the DB queried?</td></tr>
+  <tr><td>5</td><td>Entity</td><td>task/entity/Task.java</td><td>What does one row look like + its relationships?</td></tr>
+  <tr><td>6</td><td>Mapper</td><td>task/mapper/TaskMapper.java</td><td>How does an entity become the response DTO?</td></tr>
+</table>
+<div class="box why"><span class="label">Why this order</span>
+<p>You follow the same path a request takes. By the time you reach the entity, you already know <i>why</i> each field
+matters because you saw it used in the controller and service. Top-down beats reading files alphabetically.</p></div>
+
+<h3>The whole backend, one screen</h3>
+<div class="ascii">REQUEST ──▶ Controller ──▶ Service ──▶ Repository ──▶ Database
+            (@RestController) (@Service)  (interface       (PostgreSQL)
+             thin, HTTP        rules,      extends
+             only)             @Transactional JpaRepository)
+                  ▲                                  │
+                  └────────── DTO ◀── Mapper ◀────── Entity (@Entity)
+              (record in dto/)   (@Component)    (the DB row)</div>
+
+<!-- ============ PART 6 ============ -->
+<div class="part"></div>
+<h2>Part 6 — Annotation cheat-sheet</h2>
+<p>See one of these on a class/method/field? Here's what it means and which layer it signals.</p>
+<table>
+  <tr><th>Annotation</th><th>Layer / meaning</th></tr>
+  <tr><td><code>@RestController</code></td><td>Controller — handles HTTP, returns JSON.</td></tr>
+  <tr><td><code>@RequestMapping</code> / <code>@GetMapping</code> / <code>@PostMapping</code> / <code>@PutMapping</code> / <code>@PatchMapping</code> / <code>@DeleteMapping</code></td><td>Controller — binds a URL + HTTP verb to a method.</td></tr>
+  <tr><td><code>@PathVariable</code> / <code>@RequestParam</code> / <code>@RequestBody</code></td><td>Controller — pull data from the URL path / query string / JSON body.</td></tr>
+  <tr><td><code>@Valid</code></td><td>Controller — run the DTO's validation rules before the method.</td></tr>
+  <tr><td><code>@AuthenticationPrincipal</code></td><td>Security — inject the logged-in user's id (from the JWT).</td></tr>
+  <tr><td><code>@Service</code></td><td>Service — business logic bean.</td></tr>
+  <tr><td><code>@Transactional</code></td><td>Service — wrap DB work in one all-or-nothing transaction.</td></tr>
+  <tr><td><code>@Component</code></td><td>Generic Spring-managed bean (e.g. mappers, the JWT filter).</td></tr>
+  <tr><td><code>@Repository</code> / <code>extends JpaRepository</code></td><td>Repository — database access.</td></tr>
+  <tr><td><code>@Entity</code> / <code>@Table</code> / <code>@Id</code> / <code>@Column</code> / <code>@ManyToOne</code></td><td>Entity — maps a class/field to a table/column/relationship.</td></tr>
+  <tr><td><code>@Configuration</code> / <code>@Bean</code></td><td>Config — defines beans (often library objects).</td></tr>
+  <tr><td><code>@RestControllerAdvice</code> / <code>@ExceptionHandler</code></td><td>Error handling — global catch-and-format.</td></tr>
+  <tr><td><code>record ... { }</code> in <code>dto/</code></td><td>DTO — the JSON shape (no annotation needed to be a DTO).</td></tr>
+</table>
+
+<!-- ============ PART 7 ============ -->
+<div class="part"></div>
+<h2>Part 7 — What we've built so far</h2>
+<table>
+  <tr><th>Phase</th><th>What it added</th><th>Key files to recognise it</th></tr>
+  <tr><td>1–2</td><td>Project skeleton + DB schema (Flyway)</td><td>pom.xml, application*.yml, db/migration/V1__init.sql</td></tr>
+  <tr><td>3</td><td>Entities + repositories + auditing</td><td>*/entity/*, */repository/*, common/audit</td></tr>
+  <tr><td>4</td><td>Security: BCrypt + JWT</td><td>config/SecurityConfig, auth/service/JwtService, auth/filter/JwtAuthFilter</td></tr>
+  <tr><td>5</td><td>Register/login + /users/me</td><td>auth/controller, auth/service/AuthService, user/*</td></tr>
+  <tr><td>6</td><td>Categories CRUD</td><td>category/* (full slice)</td></tr>
+  <tr><td>7</td><td>Tasks CRUD + complete-toggle</td><td>task/* (full slice)</td></tr>
+  <tr><td>8</td><td>Task filtering + pagination</td><td>task/spec/TaskSpecifications, common/dto/PageResponse</td></tr>
+  <tr><td>9</td><td>Consistent error handling</td><td>common/exception/* , common/dto/ErrorResponse</td></tr>
+  <tr><td>10</td><td>Analytics summary</td><td>analytics/* , aggregation queries in TaskRepository</td></tr>
+  <tr><td>—</td><td><b>Next.js + Tailwind frontend</b></td><td>frontend/src/app/*, frontend/src/lib/(api, auth, types)</td></tr>
+</table>
+<p class="small">Still to come: Phase 12 (deployment), Phase 11 (tests), Phase 13 (wrap-up).</p>
+
+<!-- ============ GLOSSARY ============ -->
+<div class="part"></div>
+<h2>Glossary</h2>
+<table>
+  <tr><th>Term</th><th>Plain meaning</th></tr>
+  <tr><td>Origin</td><td>scheme + host + port, e.g. <code>http://localhost:3000</code>. CORS is about cross-origin calls.</td></tr>
+  <tr><td>CORS</td><td>Browser rule; the server must allow another origin to call it.</td></tr>
+  <tr><td>JWT</td><td>Signed token proving who you are; sent as <code>Authorization: Bearer …</code>.</td></tr>
+  <tr><td>localStorage</td><td>Browser key-value store; we keep the token here between page loads.</td></tr>
+  <tr><td>fetch</td><td>The browser's function to make HTTP requests (used in api.ts).</td></tr>
+  <tr><td>Controller</td><td>Backend layer that handles HTTP and returns JSON.</td></tr>
+  <tr><td>Service</td><td>Backend layer holding the business rules.</td></tr>
+  <tr><td>Repository</td><td>Backend interface that reads/writes the database.</td></tr>
+  <tr><td>Entity</td><td>Java class mapped to a DB table (one object = one row).</td></tr>
+  <tr><td>DTO</td><td>The shape of JSON in/out; kept separate from the entity.</td></tr>
+  <tr><td>Mapper</td><td>Converts entity ↔ DTO.</td></tr>
+  <tr><td>Bean / DI</td><td>An object Spring creates and injects for you (you never <code>new</code> it).</td></tr>
+  <tr><td>Specification</td><td>A composable WHERE-clause piece for dynamic filtering.</td></tr>
+  <tr><td>Client / Server component (Next.js)</td><td>Client = runs in browser (interactive); Server = runs on server. Our app is client-rendered.</td></tr>
+  <tr><td>Context (React)</td><td>Shared state across components (we use it for the logged-in user — auth.tsx).</td></tr>
+</table>
+
+<hr>
+<p class="small">TaskFlow full-stack guide · backend at localhost:8080/api/v1 · frontend at localhost:3000 ·
+Pair this with the per-file walkthrough (Phases 1–7) and the testing guide in <code>docs/</code>.</p>
+
+</body>
+</html>
